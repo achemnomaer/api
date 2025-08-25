@@ -11,6 +11,8 @@ import { AuditModule } from '../audit/audit.module';
 import { LocalStrategy } from './strategies/local.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { GoogleStrategy } from './strategies/google.strategy';
+import { GoogleAdminStrategy } from './strategies/google-admin.strategy';
+import { PermissionsModule } from '../permissions/permissions.module';
 
 @Module({
   imports: [
@@ -21,9 +23,10 @@ import { GoogleStrategy } from './strategies/google.strategy';
     OtpModule,
     MailModule,
     AuditModule,
+    PermissionsModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, LocalStrategy, JwtStrategy, GoogleStrategy],
+  providers: [AuthService, LocalStrategy, JwtStrategy, GoogleStrategy, GoogleAdminStrategy],
   exports: [AuthService],
 })
 export class AuthModule {}

@@ -19,6 +19,8 @@ import { JwtPayload } from '../../common/interfaces/jwt-payload.interface';
 import { UserStatus } from '../../common/enums/user-status.enum';
 import { OtpType } from '../../common/enums/otp-type.enum';
 import { AuditAction } from '../../common/enums/audit-action.enum';
+import { AuthProvider, AuthAudience } from '../../common/enums/auth-provider.enum';
+import { PermissionsService } from '../permissions/permissions.service';
 
 interface AuthTokens {
   accessToken: string;
@@ -44,6 +46,7 @@ export class AuthService {
     private otpService: OtpService,
     private mailService: MailService,
     private auditService: AuditService,
+    private permissionsService: PermissionsService,
   ) {}
 
   private isDupKeyError(err: unknown): boolean {
@@ -52,7 +55,11 @@ export class AuthService {
 
   async register(registerDto: RegisterDto, ip: string, userAgent: string): Promise<User> {
     try {
-      const user = await this.usersService.create(registerDto);
+      const user = await this.usersService.create({
+        ...registerDto,
+        signupProvider: AuthProvider.EMAIL,
+        linkedProviders: [AuthProvider.EMAIL],
+      });
 
       const { otp } = await this.otpService.generateOtp(user.id!, OtpType.VERIFY_EMAIL);
       await this.mailService.sendEmailVerification(user, otp);
@@ -100,6 +107,8 @@ export class AuthService {
         googleId: googleUser.googleId,
         avatar: googleUser.avatar,
         status: UserStatus.ACTIVE,
+        signupProvider: AuthProvider.GOOGLE,
+        linkedProviders: [AuthProvider.GOOGLE],
       });
 
       await this.usersService.verifyEmail(user.id!);
@@ -108,6 +117,7 @@ export class AuthService {
         googleId: googleUser.googleId,
         avatar: googleUser.avatar,
       });
+      await this.usersService.linkProvider(user.id!, AuthProvider.GOOGLE);
     }
 
     if (user.status === UserStatus.SUSPENDED) {
@@ -118,7 +128,7 @@ export class AuthService {
   }
 
   async login(user: User, ip: string, userAgent: string, deviceName?: string): Promise<AuthTokens> {
-    const tokens = await this.generateTokens(user);
+    const tokens = await this.generateTokens(user, AuthAudience.WEB);
 
     const session = await this.sessionsService.createSession(
       user.id!,
@@ -144,6 +154,39 @@ export class AuthService {
     };
   }
 
+  async adminLogin(user: User, ip: string, userAgent: string, deviceName?: string): Promise<AuthTokens> {
+    // Check if user has admin panel access
+    const hasAccess = await this.permissionsService.hasPermissions(user, ['panel:access']);
+    if (!hasAccess) {
+      throw new UnauthorizedException('Access denied: Admin panel access required');
+    }
+
+    const tokens = await this.generateTokens(user, AuthAudience.ADMIN);
+
+    const session = await this.sessionsService.createSession(
+      user.id!,
+      tokens.refreshToken,
+      ip,
+      userAgent,
+      deviceName,
+    );
+
+    await this.usersService.updateLastLogin(user.id!, ip);
+
+    await this.auditService.log({
+      actorId: user.id!,
+      action: AuditAction.LOGIN,
+      resource: 'admin_auth',
+      resourceId: user.id!,
+      meta: { ip, userAgent, deviceName, sessionId: session.id },
+    });
+
+    return {
+      ...tokens,
+      sessionId: session.id!,
+    };
+  }
+
   async refreshTokens(
     refreshToken: string,
     sessionId: string,
@@ -159,7 +202,12 @@ export class AuthService {
       return null;
     }
 
-    const tokens = await this.generateTokens(user);
+    // Determine audience from existing session context
+    // For now, we'll default to WEB, but you could store audience in session
+    // or decode the old refresh token to get the audience
+    const audience = AuthAudience.WEB; // Could be enhanced to detect from context
+    
+    const tokens = await this.generateTokens(user, audience);
     await this.sessionsService.rotateRefreshToken(sessionId, tokens.refreshToken);
 
     await this.auditService.log({
@@ -277,6 +325,44 @@ export class AuthService {
     await this.mailService.sendWelcome(user);
   }
 
+  async setPassword(userId: string, password: string, ip: string, userAgent: string): Promise<void> {
+    const user = await this.usersService.setPassword(userId, password);
+
+    await this.auditService.log({
+      actorId: userId,
+      action: AuditAction.PASSWORD_CHANGE,
+      resource: 'auth',
+      resourceId: userId,
+      meta: { ip, userAgent, action: 'set_password' },
+    });
+
+    await this.mailService.sendPasswordChangeNotification(user);
+  }
+
+  async linkProvider(userId: string, provider: AuthProvider): Promise<void> {
+    await this.usersService.linkProvider(userId, provider);
+
+    await this.auditService.log({
+      actorId: userId,
+      action: AuditAction.UPDATE,
+      resource: 'user_provider',
+      resourceId: userId,
+      meta: { action: 'link_provider', provider },
+    });
+  }
+
+  async unlinkProvider(userId: string, provider: AuthProvider): Promise<void> {
+    await this.usersService.unlinkProvider(userId, provider);
+
+    await this.auditService.log({
+      actorId: userId,
+      action: AuditAction.UPDATE,
+      resource: 'user_provider',
+      resourceId: userId,
+      meta: { action: 'unlink_provider', provider },
+    });
+  }
+
   /** Convenience for controller – no need to reach into usersService from outside */
   async verifyEmailByEmail(email: string, otp: string): Promise<void> {
     const user = await this.usersService.findByEmail(email);
@@ -299,12 +385,17 @@ export class AuthService {
     await this.mailService.sendEmailVerification(user, otp);
   }
 
-  private async generateTokens(user: User): Promise<Omit<AuthTokens, 'sessionId'>> {
+  private async generateTokens(user: User, audience: AuthAudience): Promise<Omit<AuthTokens, 'sessionId'>> {
+    const jti = `${user.id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
     const payload: JwtPayload = {
       sub: user.id!, // ⬅️ virtual id
       email: user.email,
       roles: (user.roles ?? []).map((r: any) => r.toString()),
       sessionId: '', // set by caller
+      aud: audience,
+      iss: 'education-consultancy-api',
+      jti,
     };
 
     const [accessToken, refreshToken] = await Promise.all([

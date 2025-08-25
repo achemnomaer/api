@@ -25,6 +25,7 @@ export const configValidation = Joi.object({
   GOOGLE_CLIENT_ID: Joi.string().required(),
   GOOGLE_CLIENT_SECRET: Joi.string().required(),
   GOOGLE_CALLBACK_URL: Joi.string().required(),
+  GOOGLE_ADMIN_CALLBACK_URL: Joi.string().required(),
 
   // Email
   SMTP_HOST: Joi.string().required(),

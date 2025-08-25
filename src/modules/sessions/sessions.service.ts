@@ -52,7 +52,10 @@ export class SessionsService {
       // Potential token reuse - revoke all sessions for this user
       const suspicious = await this.sessionModel.findById(this.toObjectId(sessionId)).exec();
       if (suspicious) {
-        await this.revokeAllUserSessions(String(suspicious.userId), 'Token reuse detected');
+        await this.revokeAllUserSessions(
+          String(suspicious.userId), 
+          'Token reuse detected - security breach'
+        );
         throw new UnauthorizedException('Token reuse detected. All sessions revoked.');
       }
       return null;

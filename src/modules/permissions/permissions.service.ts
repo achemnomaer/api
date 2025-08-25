@@ -74,6 +74,9 @@ export class PermissionsService {
       'roles:delete',
       'roles:assign',
       
+      // Admin panel access
+      'panel:access',
+      
       // Business permissions
       'leads:read',
       'leads:write',

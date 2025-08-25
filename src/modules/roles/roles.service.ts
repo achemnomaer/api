@@ -143,6 +143,7 @@ export class RolesService {
           'users:delete',
           'roles:read',
           'roles:write',
+          'panel:access',
           'leads:*',
           'applications:*',
           'students:*',
