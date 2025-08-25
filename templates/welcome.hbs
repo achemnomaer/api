@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Welcome to Education Consultancy</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.6;
+      color: #333333;
+      background-color: #f8f9fa;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #ffffff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .header {
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      padding: 40px 30px;
+      text-align: center;
+    }
+    .header h1 {
+      color: #ffffff;
+      margin: 0;
+      font-size: 28px;
+      font-weight: 600;
+    }
+    .content {
+      padding: 40px 30px;
+    }
+    .greeting {
+      font-size: 18px;
+      margin-bottom: 20px;
+    }
+    .button {
+      display: inline-block;
+      padding: 14px 30px;
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      color: #ffffff;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: 600;
+      margin: 20px 0;
+    }
+    .features {
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      padding: 30px;
+      margin: 30px 0;
+    }
+    .features h3 {
+      color: #495057;
+      margin-top: 0;
+    }
+    .features ul {
+      list-style: none;
+      padding: 0;
+    }
+    .features li {
+      padding: 8px 0;
+      border-bottom: 1px solid #e9ecef;
+    }
+    .features li:last-child {
+      border-bottom: none;
+    }
+    .footer {
+      background-color: #f8f9fa;
+      padding: 30px;
+      text-align: center;
+      border-top: 1px solid #e9ecef;
+    }
+    .footer p {
+      color: #6c757d;
+      font-size: 14px;
+      margin: 5px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎉 Welcome to Education Consultancy!</h1>
+    </div>
+    
+    <div class="content">
+      <div class="greeting">
+        Hello {{firstName}} {{lastName}},
+      </div>
+      
+      <p>Congratulations! Your email has been successfully verified and your account is now active.</p>
+      
+      <p>We're thrilled to have you join our community of students, educators, and professionals committed to educational excellence.</p>
+      
+      <div class="features">
+        <h3>What you can do now:</h3>
+        <ul>
+          <li>📚 Browse our comprehensive course catalog</li>
+          <li>👨‍🏫 Connect with expert counselors</li>
+          <li>📊 Track your application progress</li>
+          <li>💬 Join our community forums</li>
+          <li>📧 Receive personalized recommendations</li>
+        </ul>
+      </div>
+      
+      <div style="text-align: center;">
+        <a href="{{frontendUrl}}/dashboard" class="button">
+          Get Started Now
+        </a>
+      </div>
+      
+      <p>If you have any questions or need assistance getting started, our support team is here to help. Simply reply to this email or contact us through our platform.</p>
+      
+      <p>Welcome aboard!</p>
+      
+      <p>Best regards,<br>The Education Consultancy Team</p>
+    </div>
+    
+    <div class="footer">
+      <p>&copy; {{year}} Education Consultancy. All rights reserved.</p>
+      <p>You're receiving this email because you created an account with us.</p>
+    </div>
+  </div>
+</body>
+</html>
