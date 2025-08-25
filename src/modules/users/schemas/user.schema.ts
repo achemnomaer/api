@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Types } from 'mongoose';
 import { UserStatus } from '../../../common/enums/user-status.enum';
+import { AuthProvider } from '../../../common/enums/auth-provider.enum';
 import * as mongooseLeanVirtuals from 'mongoose-lean-virtuals';
 import type { HydratedDocument } from 'mongoose';
 
@@ -40,6 +41,12 @@ export class User {
 
   @Prop({ default: false })
   isEmailVerified!: boolean;
+
+  @Prop({ type: String, enum: AuthProvider })
+  signupProvider?: AuthProvider;
+
+  @Prop({ type: [String], enum: AuthProvider, default: [] })
+  linkedProviders!: AuthProvider[];
 
   @Prop() googleId?: string;
   @Prop() avatar?: string;

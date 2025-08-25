@@ -1,5 +1,6 @@
 import { IsEmail, IsString, IsOptional, MinLength, IsEnum } from 'class-validator';
 import { UserStatus } from '../../../common/enums/user-status.enum';
+import { AuthProvider } from '../../../common/enums/auth-provider.enum';
 
 export class CreateUserDto {
   @IsEmail()
@@ -31,4 +32,12 @@ export class CreateUserDto {
   @IsOptional()
   @IsString()
   avatar?: string;
+
+  @IsOptional()
+  @IsEnum(AuthProvider)
+  signupProvider?: AuthProvider;
+
+  @IsOptional()
+  @IsEnum(AuthProvider, { each: true })
+  linkedProviders?: AuthProvider[];
 }
